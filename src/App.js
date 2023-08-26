@@ -2,28 +2,25 @@ import { useEffect, useState } from "react";
 
 const tempMovieData = [
   {
-    image: {
-      url: "",
-    },
-    id: "tt1375666",
-    title: "Parasite",
-    year: "2019",
+    imdbID: "tt1375666",
+    Title: "Inception",
+    Year: "2010",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
   },
   {
-    image: {
-      url: "",
-    },
-    id: "tt0088763",
-    title: "Parasite",
-    year: "2019",
+    imdbID: "tt0133093",
+    Title: "The Matrix",
+    Year: "1999",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
   },
   {
-    image: {
-      url: "",
-    },
-    id: "tt6751668",
-    title: "Parasite",
-    year: "2019",
+    imdbID: "tt6751668",
+    Title: "Parasite",
+    Year: "2019",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
   },
 ];
 
@@ -69,13 +66,12 @@ function Logo() {
 function NumResults({ movies }) {
   return (
     <p className="num-results">
-      Found <strong>{movies.length}</strong> results
+      Found <strong>{movies?.length}</strong> results
     </p>
   );
 }
 
-function Search() {
-  const [query, setQuery] = useState("");
+function Search({ query, setQuery }) {
   return (
     <input
       className="search"
@@ -89,9 +85,9 @@ function Search() {
 
 function MovieList({ movies }) {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {movies?.map((movie) => (
-        <Movie movie={movie} key={movie.id} />
+        <Movie movie={movie} key={movie.imdbID} />
       ))}
     </ul>
   );
@@ -100,12 +96,12 @@ function MovieList({ movies }) {
 function Movie({ movie }) {
   return (
     <li>
-      <img src={movie?.image?.url} alt={`${movie.title} poster`} />
-      <h3>{movie.title}</h3>
+      <img src={movie?.Poster} alt={`${movie.Title} poster`} />
+      <h3>{movie.Title}</h3>
       <div>
         <p>
           <span>🗓</span>
-          <span>{movie.year}</span>
+          <span>{movie.Year}</span>
         </p>
       </div>
     </li>
@@ -178,7 +174,7 @@ function WatchedMovie({ movie }) {
 
 function WatchedMoviesList({ watched }) {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {watched.map((movie) => (
         <WatchedMovie movie={movie} key={movie.imdbID} />
       ))}
@@ -189,36 +185,86 @@ function WatchedMoviesList({ watched }) {
 function Main({ children }) {
   return <main className="main">{children}</main>;
 }
-const url = "https://imdb8.p.rapidapi.com/title/find?q=interstellar";
-const options = {
-  method: "GET",
-  headers: {
-    "X-RapidAPI-Key": "2e7c1454ecmsha4d0336bb2e08e5p17a20djsnad3504ca6eff",
-    "X-RapidAPI-Host": "imdb8.p.rapidapi.com",
-  },
-};
+
+// const url = "https://imdb8.p.rapidapi.com/title/find?q=game%20of%20thrones";
+// const options = {
+//   method: "GET",
+//   headers: {
+//     "X-RapidAPI-Key": "2e7c1454ecmsha4d0336bb2e08e5p17a20djsnad3504ca6eff",
+//     "X-RapidAPI-Host": "imdb8.p.rapidapi.com",
+//   },
+// };
+
+function Loader() {
+  return <p className="loader">Loading...</p>;
+}
+function ErrorMessage({ message }) {
+  return (
+    <p className="error">
+      <span>⛔</span> {message}
+    </p>
+  );
+}
 
 export default function App() {
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(function () {
-    fetch(url, options)
-      .then((res) => res.json())
-      .then((data) => setMovies(data.results));
-  }, []);
+  useEffect(
+    function () {
+      async function getMovies() {
+        try {
+          setIsLoading(true);
+          setError("");
+          const resp = await fetch(
+            `http://www.omdbapi.com/?i=tt3896198&apikey=4055a0c8&s=${query.toLowerCase()}`
+          );
+          if (!resp.ok) {
+            throw new Error("Something Went Wrong");
+          }
+
+          const data = await resp.json();
+          if (data.Response === "False") {
+            throw new Error("Movie not found");
+          }
+
+          setMovies(data.Search);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+      if (query.length < 3) {
+        setMovies([]);
+        setError("");
+        return;
+      }
+      getMovies();
+    },
+    [query]
+  );
 
   return (
     <>
       <NavBar>
         <Logo />
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />{" "}
       </NavBar>
 
       <Main>
         <Box>
-          <MovieList movies={movies} />
+          {isLoading ? (
+            <Loader />
+          ) : error ? (
+            <ErrorMessage message={error} />
+          ) : (
+            <MovieList movies={movies} />
+          )}
         </Box>
 
         <Box>
