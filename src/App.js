@@ -1,26 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const tempMovieData = [
   {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
+    image: {
+      url: "",
+    },
+    id: "tt1375666",
+    title: "Parasite",
+    year: "2019",
   },
   {
-    imdbID: "tt0133093",
-    Title: "The Matrix",
-    Year: "1999",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
+    image: {
+      url: "",
+    },
+    id: "tt0088763",
+    title: "Parasite",
+    year: "2019",
   },
   {
-    imdbID: "tt6751668",
-    Title: "Parasite",
-    Year: "2019",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
+    image: {
+      url: "",
+    },
+    id: "tt6751668",
+    title: "Parasite",
+    year: "2019",
   },
 ];
 
@@ -88,7 +91,7 @@ function MovieList({ movies }) {
   return (
     <ul className="list">
       {movies?.map((movie) => (
-        <Movie movie={movie} key={movie.imdbID} />
+        <Movie movie={movie} key={movie.id} />
       ))}
     </ul>
   );
@@ -97,12 +100,12 @@ function MovieList({ movies }) {
 function Movie({ movie }) {
   return (
     <li>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
-      <h3>{movie.Title}</h3>
+      <img src={movie?.image?.url} alt={`${movie.title} poster`} />
+      <h3>{movie.title}</h3>
       <div>
         <p>
           <span>🗓</span>
-          <span>{movie.Year}</span>
+          <span>{movie.year}</span>
         </p>
       </div>
     </li>
@@ -186,10 +189,25 @@ function WatchedMoviesList({ watched }) {
 function Main({ children }) {
   return <main className="main">{children}</main>;
 }
+const url = "https://imdb8.p.rapidapi.com/title/find?q=interstellar";
+const options = {
+  method: "GET",
+  headers: {
+    "X-RapidAPI-Key": "2e7c1454ecmsha4d0336bb2e08e5p17a20djsnad3504ca6eff",
+    "X-RapidAPI-Host": "imdb8.p.rapidapi.com",
+  },
+};
 
 export default function App() {
   const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);
+
+  useEffect(function () {
+    fetch(url, options)
+      .then((res) => res.json())
+      .then((data) => setMovies(data.results));
+  }, []);
+
   return (
     <>
       <NavBar>
