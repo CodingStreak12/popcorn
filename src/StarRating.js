@@ -12,10 +12,11 @@ const starContainerStyle = {
 
 export default function StarRating({
   maxValue = 5,
-  color = "yellow",
+  color = "gold",
   size = 48,
   messages = [],
   defaultRating = 0,
+  onSetRating,
 }) {
   const [rating, setRating] = useState(defaultRating);
 
@@ -40,7 +41,10 @@ export default function StarRating({
         {Array.from({ length: maxValue }, (_, i) => (
           <span
             style={starStyle}
-            onClick={() => setRating(i + 1)}
+            onClick={() => {
+              setRating(i + 1);
+              onSetRating(i + 1);
+            }}
             onMouseEnter={() => setTempRating(i + 1)}
             onMouseLeave={() => setTempRating(0)}
           >
