@@ -246,6 +246,19 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     onAddWatched(newWatchedMovie);
     onCloseMovie();
   }
+
+  useEffect(function () {
+    function callBack(e) {
+      if (e.code === "Escape") {
+        onCloseMovie();
+      }
+    }
+    document.addEventListener("keydown", callBack);
+
+    return function () {
+      document.removeEventListener("keydown", callBack);
+    };
+  }, []);
   useEffect(
     function () {
       async function getMovieDetails() {
@@ -334,12 +347,15 @@ export default function App() {
   }
   useEffect(
     function () {
+      const controller = new AbortController();
       async function getMovies() {
         try {
           setIsLoading(true);
+          handleCloseMovie();
           setError("");
           const resp = await fetch(
-            `http://www.omdbapi.com/?i=tt3896198&apikey=4055a0c8&s=${query.toLowerCase()}`
+            `http://www.omdbapi.com/?i=tt3896198&apikey=4055a0c8&s=${query.toLowerCase()}`,
+            { signal: controller.signal }
           );
           if (!resp.ok) {
             throw new Error("Something Went Wrong");
@@ -351,8 +367,11 @@ export default function App() {
           }
 
           setMovies(data.Search);
+          setError("");
         } catch (err) {
-          setError(err.message);
+          if (err.name !== "AbortError") {
+            setError(err.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -362,7 +381,11 @@ export default function App() {
         setError("");
         return;
       }
+
       getMovies();
+      return function () {
+        controller.abort();
+      };
     },
     [query]
   );
